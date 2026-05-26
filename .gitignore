@@ -1,0 +1,65 @@
+# sbt / Scala build output
+target/
+project/target/
+project/project/
+project/boot/
+project/build/
+project/plugins/project/
+.cache
+.history
+.lib/
+dist/*
+build/
+
+# Metals (VSCode Scala) / Bloop / BSP
+.bloop/
+.bsp/
+.metals/
+metals.sbt
+project/metals.sbt
+project/.bloop/
+
+# IntelliJ IDEA
+.idea/
+.idea_modules/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+
+# Eclipse / ScalaIDE / Ensime
+.classpath
+.project
+.settings/
+.ensime
+.ensime_cache/
+
+# Coursier
+.coursier/
+
+# JEnv / SDKMAN
+.java-version
+
+# Logs / temp
+*.log
+*.tmp
+*.swp
+*~
+
+# Compiled class files
+*.class
+
+# Packaged jars (build them on demand)
+*.jar
+!project/sbt-launch.jar
+!lib/**/*.jar
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Local environment overrides
+.env
+.env.local

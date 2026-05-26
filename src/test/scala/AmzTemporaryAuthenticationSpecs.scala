@@ -1,19 +1,17 @@
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.language.postfixOps
 
-/**
-  * Created by prayagupd
+/** Created by prayagupd
   * on 6/2/17.
   */
-
-class AmzTemporaryAuthenticationSpecs extends FunSuite with Matchers {
+class AmzTemporaryAuthenticationSpecs extends AnyFunSuite with Matchers {
 
   val auth = new AmzTemporaryAuthentication
 
@@ -33,11 +31,13 @@ class AmzTemporaryAuthenticationSpecs extends FunSuite with Matchers {
 
   test("tokens") {
 
-    auth.getToken(authBase64,
+    auth.getToken(
+      authBase64,
       """{
          "Role":"arn:aws:iam::accountId:role/SomeRole",
         "Principal":"arn:aws:iam::accountId:saml-provider/DWM"
-        }""".stripMargin)
+        }""".stripMargin
+    )
 
     Thread.sleep(20000)
   }
