@@ -100,7 +100,8 @@ object AmzCredentialsCli {
       if (currentTime >= expiresAt) {
         val expires = fetchAndWriteCredentials(vendor)(selected)
         expiresAt = expires.getTime - (30 * 60 * 1000)
-        println(s"[INFO] But don't worry I will renew the access token in ${(expiresAt - currentTime) / 1000} seconds.")
+        val renewInSeconds = (expiresAt - currentTime) / 1000
+        println(s"[INFO] Relax, I got it. I'll sneakily refresh your token in ${renewInSeconds / 60} minutes ($renewInSeconds seconds) — way before AWS notices. 🕵️")
       }
       Thread.sleep(60000L)
     }
