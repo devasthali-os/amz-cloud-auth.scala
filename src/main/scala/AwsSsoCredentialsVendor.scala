@@ -84,15 +84,22 @@ object AwsSsoCredentialsVendor {
     collected
   }
 
-  private[this] def readCachedAccessToken(startUrl: String): SsoCachedToken = {
+  private[this] def ssoLogin(profileName: String): Unit = {
+    println(s"[INFO] Running `aws sso login --profile $profileName` ...")
+    val proc = new ProcessBuilder("aws", "sso", "login", "--profile", profileName)
+      .inheritIO()
+      .start()
+    val exitCode = proc.waitFor()
+    if (exitCode != 0) sys.error(s"`aws sso login --profile $profileName` failed with exit code $exitCode")
+  }
+
+  private[this] def readCachedAccessToken(startUrl: String, profileName: String): SsoCachedToken = {
     val cacheDir  = Paths.get(System.getProperty("user.home"), ".aws", "sso", "cache")
     val cacheFile = cacheDir.resolve(sha1Hex(startUrl) + ".json")
 
     if (!Files.exists(cacheFile)) {
-      sys.error(
-        s"No cached SSO token at $cacheFile. " +
-          s"Run `aws sso login --sso-session ...` or `aws sso login --profile <name>` first."
-      )
+      println(s"[INFO] No cached SSO token found for $startUrl. Triggering SSO login...")
+      ssoLogin(profileName)
     }
 
     val json = new String(Files.readAllBytes(cacheFile), "UTF-8").parseJson.asJsObject
@@ -102,12 +109,16 @@ object AwsSsoCredentialsVendor {
     )
 
     if (token.expiresAt.isBefore(Instant.now())) {
-      sys.error(
-        s"Cached SSO token at $cacheFile expired at ${token.expiresAt}. " +
-          s"Re-run `aws sso login` to refresh it."
+      println(s"[INFO] Cached SSO token expired at ${token.expiresAt}. Triggering SSO login...")
+      ssoLogin(profileName)
+      val refreshedJson = new String(Files.readAllBytes(cacheFile), "UTF-8").parseJson.asJsObject
+      SsoCachedToken(
+        accessToken = refreshedJson.fields("accessToken").convertTo[String],
+        expiresAt   = Instant.parse(refreshedJson.fields("expiresAt").convertTo[String])
       )
+    } else {
+      token
     }
-    token
   }
 
   /** SHA-1 hex digest of the start-URL — matches what the AWS CLI uses to
@@ -121,8 +132,8 @@ object AwsSsoCredentialsVendor {
   }
 
   // Expose for the instance method below.
-  private[AwsSsoCredentialsVendor] def loadCache(startUrl: String): SsoCachedToken =
-    readCachedAccessToken(startUrl)
+  private[AwsSsoCredentialsVendor] def loadCache(startUrl: String, profileName: String): SsoCachedToken =
+    readCachedAccessToken(startUrl, profileName)
 }
 
 /** Vendor backed by AWS IAM Identity Center (formerly AWS SSO).
@@ -144,7 +155,7 @@ class AwsSsoCredentialsVendor(
 
   override type Role = AwsSsoCredentialsVendor.Role
 
-  private val cached = AwsSsoCredentialsVendor.loadCache(startUrl)
+  private val cached = AwsSsoCredentialsVendor.loadCache(startUrl, profileName)
 
   private val ssoClient =
     SsoClient.builder().region(Region.of(ssoRegion)).build()

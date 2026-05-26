@@ -115,6 +115,7 @@ object AmzCredentialsCli {
 
     try {
       val path = Paths.get(credentialsPath)
+      Files.createDirectories(path.getParent)
       Files.createFile(path)
     } catch {
       case _: FileAlreadyExistsException => ()
